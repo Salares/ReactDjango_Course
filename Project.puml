@@ -1,0 +1,92 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+'USER prijde na stranku, udela rezervaci, jde stavet budku do dane
+'dilny, postavi BUDKU, posle DATA k budce, BUDKA se prida do MAPY
+', user si vybere PARTNERA, dostane KUPON k PARTNEROVI,
+'uplatni KUPON
+skinparam shadowing false
+
+box Mesto #EEE
+
+actor Lokal_Admin as adm
+actor Lokal_Partner as par
+actor Uživatel as usr
+
+participant Web as web
+
+
+participant SYSTEM as sys
+
+database Rezervace as resDB
+database Mapa as mapDB
+database Kupóny as kupDB
+
+group Rezervace
+usr -> web : Uživatel otevře\n Web
+activate web
+web -> sys : pridatRez(jmeno, datum, cas)
+activate sys
+sys -> sys : vytvorRezervaci\n (jmeno, datum, cas)\n -> rezervace
+sys -> resDB : POST(rezervace)
+sys -> web : alert(rezervace)
+deactivate sys
+web -> usr : Potrvrzení\n rezervace\n [mail]
+deactivate web
+end rezervace
+
+group Stavba
+usr --> usr : Uživatel vyrobí\n budku
+usr -> web : Pošle\n fotografii a GPS
+activate web
+web -> sys : pridatBudku(foto,GPS)
+activate sys
+sys -> web : alert(Budka)
+web -> adm : mail\n [Budka]
+sys <-> mapDB : POST(Budka)
+sys -> web : Poslat(Budka)
+deactivate sys
+web -> usr : mail\n [Budka,\n Výběr Kupónu]
+deactivate web
+end Stavba
+
+group Partner - Kupón
+usr -> web : Uživatel vybe\n Partnera
+activate web
+web -> sys : Vyber(Partner)
+activate sys
+sys -> sys : vytvorKupon(Partner, User.budka)\n -> Kupon
+sys -> kupDB : POST(Kupon)\n -> Kupon
+sys -> web : Poslat(Kupon)
+deactivate sys
+web -> usr : mail[Kupón]
+web -> adm : mail[Kupón,\n Uživatel]
+web -> par : mail[Kupón,\n Uživatel]
+deactivate web
+usr -> par : Uživatel využije\n kupón u Partnera
+par -> web : Partner zadá na\n Web použitý\n kupón
+activate web
+web -> sys : Use(Kupon)
+deactivate web
+activate sys
+sys -> kupDB : PUT\n (KUPON.used = True)
+deactivate sys
+end Partner
+
+end box
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@enduml
